@@ -730,6 +730,9 @@ function show(id){
 }
 function goHome(){ clearInterval(timerId); refreshStats(); show("homeScreen"); }
 
+/* Escape HTML so options like <h1>, <img> display as text instead of being parsed as tags */
+function esc(s){ return String(s).replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
 /* ================= SOUND (Alarm/Beep) ================= */
 let audioCtx=null;
 function beep(freq=880, dur=300, type="sine", vol=0.3){
@@ -913,9 +916,9 @@ function finish(){
     const ok=answers[i]===q.a;
     const d=document.createElement("div");
     d.className="review"+(ok?"":" bad");
-    const userAns = (answers[i]===null||answers[i]===undefined) ? "⏱ Not answered" : q.o[answers[i]];
-    d.innerHTML=`<b>${ok?"✅":"❌"} Q${i+1}: ${q.q}</b>
-      <p>Your answer: ${userAns} &nbsp;|&nbsp; Correct: ${q.o[q.a]}</p>`;
+    const userAns = (answers[i]===null||answers[i]===undefined) ? "⏱ Not answered" : esc(q.o[answers[i]]);
+    d.innerHTML=`<b>${ok?"✅":"❌"} Q${i+1}: ${esc(q.q)}</b>
+      <p>Your answer: ${userAns} &nbsp;|&nbsp; Correct: ${esc(q.o[q.a])}</p>`;
     rev.appendChild(d);
   });
   const board=JSON.parse(localStorage.getItem("qm_board")||"[]");
@@ -963,7 +966,7 @@ function renderAdmin(){
     (custom[c]||[]).forEach((q,i)=>{
       any=true;
       const d=document.createElement("div"); d.className="review";
-      d.innerHTML=`<b>${ICONS[c]||"📝"} ${c}:</b> ${q.q}
+      d.innerHTML=`<b>${ICONS[c]||"📝"} ${esc(c)}:</b> ${esc(q.q)}
         <div class="row-flex" style="margin-top:8px"><button class="btn danger" onclick="delQuestion('${c}',${i})">🗑 Delete</button></div>`;
       list.appendChild(d);
     });
