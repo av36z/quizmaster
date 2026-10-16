@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizMaster — Dynamic Quiz Website</title>
+<style>
+:root{
+  --navy:#0b1b3a; --navy2:#11295c; --card:#162a54; --accent:#00d9ff;
+  --gold:#ffb700; --white:#ffffff; --light:#c9d6f2; --green:#22c55e; --red:#ef4444;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Calibri,sans-serif;}
+body{background:radial-gradient(1200px 600px at 80% -10%,#173a7a 0%,var(--navy) 55%);color:var(--white);min-height:100vh;}
+.topbar{display:flex;justify-content:space-between;align-items:center;padding:16px 6%;background:rgba(11,27,58,.85);position:sticky;top:0;z-index:50;border-bottom:2px solid var(--accent);}
+.logo{font-size:24px;font-weight:800;letter-spacing:1px;}
+.logo span{color:var(--accent);}
+.btn{background:var(--accent);color:var(--navy);border:none;padding:10px 22px;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(0,217,255,.4);}
+.btn.ghost{background:transparent;border:2px solid var(--accent);color:var(--accent);}
+.btn.gold{background:var(--gold);}
+.btn.danger{background:var(--red);color:#fff;}
+.screen{display:none;padding:40px 6%;animation:fade .4s ease;}
+.screen.active{display:block;}
+@keyframes fade{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+h1.big{font-size:clamp(32px,5vw,56px);line-height:1.15;}
+h1.big span{color:var(--accent);}
+h2.mid{font-size:clamp(22px,3vw,32px);margin-bottom:16px;}
+.tag{color:var(--gold);font-weight:700;letter-spacing:2px;text-transform:uppercase;font-size:13px;}
+.sub{color:var(--light);font-size:17px;max-width:620px;margin:14px 0 26px;}
+.hero{display:flex;gap:40px;align-items:center;flex-wrap:wrap;padding-top:30px;}
+.hero-card{flex:1;min-width:300px;}
+.stats{display:flex;gap:16px;flex-wrap:wrap;margin-top:22px;}
+.stat{background:var(--card);border:1px solid #23408a;border-radius:14px;padding:14px 22px;text-align:center;}
+.stat b{font-size:24px;color:var(--accent);display:block;}
+.stat small{color:var(--light);}
+input,select,textarea{width:100%;padding:13px 15px;border-radius:10px;border:2px solid #23408a;background:#0e2148;color:#fff;font-size:15px;outline:none;margin-bottom:14px;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+label{color:var(--light);font-size:14px;display:block;margin-bottom:6px;}
+.form-box{max-width:520px;background:var(--card);border-radius:18px;padding:28px;border:1px solid #23408a;}
+.search-wrap{position:relative;max-width:520px;margin-bottom:20px;}
+.search-wrap input{padding-left:44px;margin-bottom:0;}
+.search-wrap::before{content:"🔍";position:absolute;left:16px;top:12px;font-size:16px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:22px;margin-top:28px;}
+.card{background:var(--card);border:1px solid #23408a;border-radius:18px;padding:24px;cursor:pointer;transition:.25s;position:relative;overflow:hidden;}
+.card:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:0 12px 30px rgba(0,0,0,.45);}
+.card .ico{font-size:38px;}
+.card h3{margin:10px 0 6px;font-size:20px;}
+.card p{color:var(--light);font-size:13px;}
+.card .qn{position:absolute;top:14px;right:16px;background:var(--gold);color:var(--navy);font-weight:800;font-size:12px;padding:4px 10px;border-radius:20px;}
+.qbar{height:10px;background:#0e2148;border-radius:20px;overflow:hidden;margin:16px 0 8px;}
+.qbar div{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));width:0;transition:width .3s;}
+.meta{display:flex;justify-content:space-between;color:var(--light);font-size:14px;flex-wrap:wrap;gap:8px;}
+.timer{background:var(--gold);color:var(--navy);font-weight:800;padding:8px 18px;border-radius:30px;font-size:16px;}
+.timer.warn{background:var(--red);color:#fff;animation:pulse .6s infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.question{font-size:clamp(20px,3vw,28px);font-weight:700;margin:26px 0 22px;min-height:70px;}
+.opt{display:block;width:100%;text-align:left;background:var(--card);border:2px solid #23408a;color:#fff;padding:16px 18px;border-radius:12px;font-size:16px;cursor:pointer;margin-bottom:12px;transition:.2s;}
+.opt:hover{border-color:var(--accent);transform:translateX(6px);}
+.opt.correct{background:rgba(34,197,94,.2);border-color:var(--green);}
+.opt.wrong{background:rgba(239,68,68,.2);border-color:var(--red);}
+.opt:disabled{cursor:default;}
+.pal{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+.pal button{width:38px;height:38px;border-radius:10px;border:2px solid #23408a;background:#0e2148;color:var(--light);font-weight:700;cursor:pointer;}
+.pal button.done{background:var(--accent);color:var(--navy);border-color:var(--accent);}
+.score-big{font-size:84px;font-weight:800;color:var(--accent);text-align:center;}
+.review{background:var(--card);border-radius:14px;padding:16px 18px;margin-bottom:12px;border-left:4px solid var(--green);}
+.review.bad{border-left-color:var(--red);}
+.review p{color:var(--light);font-size:14px;margin-top:5px;}
+table{width:100%;border-collapse:collapse;margin-top:20px;background:var(--card);border-radius:14px;overflow:hidden;}
+th,td{padding:12px 14px;text-align:left;border-bottom:1px solid #23408a;font-size:14px;}
+th{background:#0e2148;color:var(--accent);text-transform:uppercase;font-size:12px;letter-spacing:1px;}
+.row-flex{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
+.badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:var(--accent);color:var(--navy);}
+.chip-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+.chip{padding:10px 18px;border-radius:30px;background:#0e2148;border:2px solid #23408a;color:var(--light);font-weight:700;cursor:pointer;transition:.2s;font-size:14px;}
+.chip:hover{border-color:var(--accent);}
+.chip.on{background:var(--accent);color:var(--navy);border-color:var(--accent);}
+.hidden{display:none;}
+@media(max-width:640px){.topbar{padding:14px 4%;}.screen{padding:28px 4%;}}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="logo">🧠 Quiz<span>Master</span></div>
+  <div class="row-flex">
+    <span class="badge" id="userBadge" style="display:none"></span>
+    <button class="btn ghost" onclick="openAdmin()">⚙️ Admin</button>
+    <button class="btn" onclick="goHome()">🏠 Home</button>
+  </div>
+</nav>
+
+<!-- ============ HOME ============ -->
+<section class="screen active" id="homeScreen">
+  <div class="hero">
+    <div class="hero-card">
+      <div class="tag">Dynamic Quiz Platform</div>
+      <h1 class="big">Test Your Knowledge.<br><span>Instant Results.</span></h1>
+      <p class="sub">Pick a category, race against the timer, and get your score the moment you finish. Admins can add new questions live — no code changes needed!</p>
+      <div class="form-box">
+        <label>Enter your name to start</label>
+        <input id="playerName" placeholder="e.g. Ashish Kumar Verma" maxlength="30">
+        <button class="btn gold" style="width:100%" onclick="startFlow()">▶ Start Quiz</button>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="stats">
+        <div class="stat"><b id="stQuizzes">0</b><small>Quizzes</small></div>
+        <div class="stat"><b id="stQuestions">0</b><small>Questions</small></div>
+        <div class="stat"><b id="stAttempts">0</b><small>Attempts</small></div>
+        <div class="stat"><b id="stTop">—</b><small>Top Score</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SETUP (Category + Count + Timer) ============ -->
+<section class="screen" id="setupScreen">
+  <div class="tag">Step 2</div>
+  <h1 class="big">Configure Your <span>Quiz</span></h1>
+  <p class="sub">Choose category, number of questions and timer as per your practice needs.</p>
+
+  <div class="search-wrap">
+    <input id="catSearch" placeholder="Search subject... (e.g. Java, DS, Physics)" oninput="filterCats()">
+  </div>
+
+  <div class="grid" id="catGrid"></div>
+
+  <!-- Settings box (appears after selecting a category) -->
+  <div class="form-box hidden" id="settingsBox" style="margin-top:28px;max-width:640px">
+    <h2 class="mid" id="selCatName"></h2>
+
+    <label>Number of Questions</label>
+    <div class="chip-row" id="countChips">
+      <div class="chip" data-v="5">5</div>
+      <div class="chip on" data-v="10">10</div>
+      <div class="chip" data-v="15">15</div>
+      <div class="chip" data-v="20">20</div>
+      <div class="chip" data-v="25">25</div>
+      <div class="chip" data-v="30">30</div>
+      <div class="chip" data-v="50">50</div>
+      <div class="chip" data-v="100">100</div>
+    </div>
+
+    <label style="margin-top:10px">Timer per Question</label>
+    <div class="chip-row" id="timerChips">
+      <div class="chip" data-v="10">10 sec</div>
+      <div class="chip on" data-v="15">15 sec</div>
+      <div class="chip" data-v="20">20 sec</div>
+      <div class="chip" data-v="30">30 sec</div>
+      <div class="chip" data-v="45">45 sec</div>
+      <div class="chip" data-v="60">60 sec</div>
+      <div class="chip" data-v="0">♾️ No Timer</div>
+    </div>
+
+    <div class="row-flex" style="margin-top:16px">
+      <button class="btn gold" style="flex:1" onclick="startQuiz()">🚀 Start Quiz</button>
+      <button class="btn ghost" onclick="hideSettings()">Cancel</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="screen" id="quizScreen">
+  <div class="meta">
+    <div>🏷️ <span id="qCat"></span> &nbsp;|&nbsp; 👤 <span id="qUser"></span></div>
+    <div class="row-flex"><span class="timer" id="timerPill">⏱ <span id="qTimer">15</span>s</span></div>
+  </div>
+  <div class="qbar"><div id="qProg"></div></div>
+  <div class="meta"><span id="qCount"></span><span id="qScoreLive"></span></div>
+  <div class="question" id="qText"></div>
+  <div id="qOpts"></div>
+  <div class="pal" id="qPal"></div>
+  <div class="row-flex" style="margin-top:24px">
+    <button class="btn danger" onclick="quitQuiz()">🛑 Quit Quiz</button>
+  </div>
+</section>
+
+<!-- ============ RESULT ============ -->
+<section class="screen" id="resultScreen">
+  <div class="tag">Result</div>
+  <h1 class="big" id="rTitle"></h1>
+  <div class="score-big" id="rScore"></div>
+  <p style="text-align:center;color:var(--light)" id="rMsg"></p>
+  <div class="row-flex" style="justify-content:center;margin:24px 0">
+    <button class="btn gold" onclick="retryQuiz()">🔄 Retry (Same Settings)</button>
+    <button class="btn" onclick="nextPractice()">➡️ Next Practice</button>
+    <button class="btn ghost" onclick="showBoard()">🏆 Leaderboard</button>
+    <button class="btn ghost" onclick="goHome()">🏠 Home</button>
+  </div>
+  <h3 style="margin:10px 0 14px">📋 Answer Review</h3>
+  <div id="rReview"></div>
+</section>
+
+<!-- ============ LEADERBOARD ============ -->
+<section class="screen" id="boardScreen">
+  <div class="tag">Hall of Fame</div>
+  <h1 class="big">🏆 <span>Leaderboard</span></h1>
+  <table><thead><tr><th>#</th><th>Name</th><th>Category</th><th>Score</th><th>Date</th></tr></thead>
+  <tbody id="boardBody"></tbody></table>
+  <div class="row-flex" style="margin-top:22px">
+    <button class="btn" onclick="goHome()">🏠 Home</button>
+  </div>
+</section>
+
+<!-- ============ ADMIN ============ -->
+<section class="screen" id="adminScreen">
+  <div class="tag">Admin Panel</div>
+  <h1 class="big">⚙️ Manage <span>Questions</span></h1>
+  <p class="sub">Add new questions dynamically — they appear in quizzes instantly.</p>
+  <div class="form-box" style="max-width:640px">
+    <label>Category</label>
+    <select id="aCat"></select>
+    <label>Question</label>
+    <textarea id="aQ" rows="2" placeholder="Type the question..."></textarea>
+    <label>Options (4) — mark the correct one with a ✅ at the start</label>
+    <input id="aO1" placeholder="✅ Option 1 (correct)">
+    <input id="aO2" placeholder="Option 2">
+    <input id="aO3" placeholder="Option 3">
+    <input id="aO4" placeholder="Option 4">
+    <button class="btn gold" style="width:100%" onclick="addQuestion()">➕ Add Question</button>
+  </div>
+
+  <h3 style="margin:26px 0 10px">📥 Bulk Import</h3>
+  <div class="form-box" style="max-width:640px">
+    <label>One question per line: Question|Opt1|Opt2|Opt3|Opt4|CorrectIndex(0-3)</label>
+    <textarea id="bulkData" rows="5" placeholder="What is 2+2?|3|4|5|6|1"></textarea>
+    <button class="btn gold" style="width:100%" onclick="bulkImport()">📥 Import</button>
+  </div>
+
+  <h3 style="margin:26px 0 10px">🗑️ Delete Questions</h3>
+  <div id="adminList"></div>
+  <div class="row-flex" style="margin-top:18px">
+    <button class="btn danger" onclick="resetAll()">🗑 Reset All Custom Data</button>
+    <button class="btn" onclick="goHome()">🏠 Home</button>
+  </div>
+</section>
+
+<script>
+/* ============================================================
+   QUESTION BANK
+   ============================================================ */
+const BANK = {
+"General Knowledge":[
+ {q:"Which is the largest planet in our solar system?",o:["Mars","Jupiter","Saturn","Neptune"],a:1},
+ {q:"How many continents are there on Earth?",o:["5","6","7","8"],a:2},
+ {q:"What is the capital of Japan?",o:["Seoul","Beijing","Bangkok","Tokyo"],a:3},
+ {q:"Which ocean is the largest?",o:["Atlantic","Indian","Pacific","Arctic"],a:2},
+ {q:"The Great Wall is located in which country?",o:["India","China","Japan","Mongolia"],a:1},
+ {q:"How many days are in a leap year?",o:["364","365","366","367"],a:2},
+ {q:"Which gas do plants absorb for photosynthesis?",o:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],a:2},
+ {q:"Who wrote the national anthem of India?",o:["Tagore","Nehru","Gandhi","Patel"],a:0},
+ {q:"Which is the fastest land animal?",o:["Lion","Cheetah","Horse","Leopard"],a:1},
+ {q:"How many colors are in a rainbow?",o:["5","6","7","8"],a:2},
+ {q:"Which planet is known as the Red Planet?",o:["Venus","Mars","Jupiter","Mercury"],a:1},
+ {q:"What is the capital of France?",o:["London","Berlin","Paris","Madrid"],a:2},
+ {q:"Which animal is the largest mammal?",o:["Elephant","Blue Whale","Giraffe","Hippo"],a:1},
+ {q:"Who invented the telephone?",o:["Edison","Bell","Tesla","Marconi"],a:1},
+ {q:"How many sides does a hexagon have?",o:["5","6","7","8"],a:1},
+ {q:"Which country has the largest population?",o:["USA","China","India","Russia"],a:2},
+ {q:"What is the smallest prime number?",o:["0","1","2","3"],a:2},
+ {q:"Which metal is liquid at room temperature?",o:["Iron","Mercury","Silver","Gold"],a:1},
+ {q:"What is the hardest natural substance?",o:["Gold","Iron","Diamond","Platinum"],a:2},
+ {q:"Which is the longest river in the world?",o:["Amazon","Nile","Ganga","Yangtze"],a:1},
+ {q:"What does 'WWW' stand for?",o:["World Wide Web","Web World Wide","Wide Web World","World Web Wide"],a:0},
+ {q:"Which country invented pizza?",o:["France","Italy","Greece","Spain"],a:1},
+ {q:"How many players in a football team on field?",o:["9","10","11","12"],a:2},
+ {q:"Which is the tallest mountain?",o:["K2","Everest","Kanchenjunga","Makalu"],a:1},
+ {q:"Who painted Mona Lisa?",o:["Van Gogh","Picasso","Da Vinci","Michelangelo"],a:2},
+ {q:"Which is the smallest continent?",o:["Europe","Australia","Antarctica","South America"],a:1},
+ {q:"What is the currency of USA?",o:["Euro","Dollar","Pound","Yen"],a:1},
+ {q:"Which bird cannot fly?",o:["Eagle","Penguin","Parrot","Sparrow"],a:1},
+ {q:"How many bones in adult human body?",o:["206","208","210","212"],a:0},
+ {q:"Which is the largest desert?",o:["Sahara","Gobi","Antarctic","Arabian"],a:2}
+],
+
+"Science":[
+ {q:"What is the chemical symbol of gold?",o:["Gd","Au","Ag","Go"],a:1},
+ {q:"Which organ pumps blood in the human body?",o:["Liver","Lungs","Heart","Kidney"],a:2},
+ {q:"Water is made of hydrogen and ___?",o:["Oxygen","Nitrogen","Carbon","Chlorine"],a:0},
+ {q:"What is the powerhouse of the cell?",o:["Nucleus","Ribosome","Mitochondria","Golgi body"],a:2},
+ {q:"Which force keeps us on the ground?",o:["Magnetism","Friction","Gravity","Inertia"],a:2},
+ {q:"Speed of light is approximately?",o:["3,000 km/s","30,000 km/s","300,000 km/s","3,000,000 km/s"],a:2},
+ {q:"Which particle carries a negative charge?",o:["Proton","Neutron","Electron","Photon"],a:2},
+ {q:"H2O2 is commonly known as?",o:["Water","Hydrogen peroxide","Heavy water","Ozone"],a:1},
+ {q:"Which vitamin is produced by sunlight on skin?",o:["A","B12","C","D"],a:3},
+ {q:"What is the boiling point of water at sea level?",o:["90°C","95°C","100°C","110°C"],a:2},
+ {q:"Which gas do humans breathe out?",o:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],a:2},
+ {q:"What is the pH of pure water?",o:["5","6","7","8"],a:2},
+ {q:"Which planet has the most moons?",o:["Jupiter","Saturn","Uranus","Neptune"],a:1},
+ {q:"What is the SI unit of force?",o:["Joule","Newton","Watt","Pascal"],a:1},
+ {q:"Which element has atomic number 1?",o:["Helium","Hydrogen","Lithium","Carbon"],a:1},
+ {q:"What is the largest organ in human body?",o:["Liver","Skin","Brain","Heart"],a:1},
+ {q:"Which blood group is universal donor?",o:["A+","B+","O-","AB+"],a:2},
+ {q:"What is the study of plants called?",o:["Zoology","Botany","Ecology","Biology"],a:1},
+ {q:"Which is the coldest planet?",o:["Mars","Neptune","Uranus","Saturn"],a:1},
+ {q:"What is the formula of common salt?",o:["NaCl","KCl","CaCl2","MgCl2"],a:0},
+ {q:"How many chambers in human heart?",o:["2","3","4","5"],a:2},
+ {q:"What is the SI unit of energy?",o:["Newton","Joule","Watt","Pascal"],a:1},
+ {q:"Which vitamin helps in blood clotting?",o:["A","B","C","K"],a:3},
+ {q:"What is the largest bone in human body?",o:["Tibia","Femur","Humerus","Skull"],a:1},
+ {q:"Which gas is used in balloons?",o:["Oxygen","Helium","Nitrogen","CO2"],a:1},
+ {q:"What is the study of earthquakes called?",o:["Geology","Seismology","Volcanology","Meteorology"],a:1},
+ {q:"Which planet is closest to the Sun?",o:["Venus","Mercury","Earth","Mars"],a:1},
+ {q:"What is the unit of electric current?",o:["Volt","Ampere","Ohm","Watt"],a:1},
+ {q:"Which acid is in lemon?",o:["Acetic","Citric","Lactic","Sulfuric"],a:1},
+ {q:"What is the hardest part of the human body?",o:["Bone","Enamel","Cartilage","Nail"],a:1}
+],
+
+"Computer Science":[
+ {q:"What does HTML stand for?",o:["HyperText Markup Language","HighText Machine Language","Hyperlink Text Mode Language","Home Tool Markup Language"],a:0},
+ {q:"Which language runs in the browser?",o:["Python","JavaScript","Java","C++"],a:1},
+ {q:"SQL is used for ___?",o:["Styling","Databases","Gaming","Images"],a:1},
+ {q:"What does CPU stand for?",o:["Central Processing Unit","Computer Personal Unit","Central Program Utility","Core Processing Utility"],a:0},
+ {q:"Which is NOT an operating system?",o:["Linux","Oracle","Windows","MacOS"],a:1},
+ {q:"1 byte equals how many bits?",o:["4","8","16","32"],a:1},
+ {q:"Which protocol is used for secure web browsing?",o:["HTTP","FTP","HTTPS","SMTP"],a:2},
+ {q:"Binary 1010 equals which decimal number?",o:["8","10","12","9"],a:1},
+ {q:"PHP is mainly a ___ language?",o:["Client-side","Server-side","Database","Markup"],a:1},
+ {q:"CSS is used for ___?",o:["Logic","Styling","Storage","Networking"],a:1},
+ {q:"What does RAM stand for?",o:["Random Access Memory","Read Access Memory","Rapid Access Memory","Real Access Memory"],a:0},
+ {q:"Which is a programming language?",o:["HTML","Python","HTTP","FTP"],a:1},
+ {q:"What does URL stand for?",o:["Uniform Resource Locator","Universal Resource Link","Uniform Reference Locator","Unique Resource Locator"],a:0},
+ {q:"Which company created Windows?",o:["Apple","Microsoft","Google","IBM"],a:1},
+ {q:"What is the brain of a computer?",o:["RAM","CPU","GPU","HDD"],a:1},
+ {q:"Which is a database?",o:["MySQL","Photoshop","Chrome","VLC"],a:0},
+ {q:"What does GUI stand for?",o:["Graphical User Interface","General User Interface","Graphical Utility Interface","Global User Interface"],a:0},
+ {q:"Which is not a programming paradigm?",o:["OOP","Functional","Procedural","Binary"],a:3},
+ {q:"What is 2^10?",o:["512","102
